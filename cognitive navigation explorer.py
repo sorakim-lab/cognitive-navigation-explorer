@@ -66,6 +66,8 @@ html, body, [class*="css"] {
     cursor: pointer;
     transition: all 0.2s ease;
     margin-bottom: 0.75rem;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 .doc-card:hover {
     border-color: #3D7EFF;
@@ -76,10 +78,12 @@ html, body, [class*="css"] {
     background: #eff6ff;
 }
 .doc-title {
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     font-weight: 600;
     color: #111827;
     margin-bottom: 0.3rem;
+    word-break: break-word;
+    line-height: 1.4;
 }
 .doc-tag {
     display: inline-block;
@@ -460,7 +464,7 @@ elif st.session_state.mode == "explore":
     </div>
     """, unsafe_allow_html=True)
 
-    col_left, col_right = st.columns([1, 2])
+    col_left, col_right = st.columns([1.2, 2])
 
     with col_left:
         st.markdown("<div class='section-header'>📂 Document List — click to open</div>", unsafe_allow_html=True)
