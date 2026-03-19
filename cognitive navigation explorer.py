@@ -469,22 +469,22 @@ elif st.session_state.mode == "explore":
             visit_count = st.session_state.doc_visit_count.get(doc_key, 0)
             is_active = st.session_state.current_doc == doc_key
 
-            badge = ""
-            if visit_count > 1:
-                badge = f'<span class="visit-badge loopback">↩ {visit_count}x</span>'
-            elif visit_count == 1:
-                badge = f'<span class="visit-badge">✓ visited</span>'
-
             tag_class = doc["tag"]
             tag_label = {"sop": "SOP", "protocol": "Protocol", "ref": "Reference"}[tag_class]
-
             active_style = "border-color: #3D7EFF; background: #eff6ff;" if is_active else ""
+
+            badge_html = ""
+            if visit_count > 1:
+                badge_html = f'<div style="margin-top:6px;"><span class="visit-badge loopback">↩ {visit_count}x visited</span></div>'
+            elif visit_count == 1:
+                badge_html = '<div style="margin-top:6px;"><span class="visit-badge">✓ visited</span></div>'
 
             st.markdown(f"""
             <div class="doc-card" style="{active_style}">
-              <div class="doc-title">{doc['title']} {badge}</div>
+              <div class="doc-title">{doc['title']}</div>
               <span class="doc-tag {tag_class}">{tag_label}</span>
               <span class="doc-tag">{doc['code']}</span>
+              {badge_html}
             </div>
             """, unsafe_allow_html=True)
 
@@ -494,7 +494,6 @@ elif st.session_state.mode == "explore":
 
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("✅ Done — View Results", use_container_width=True, type="primary"):
-            # record final doc time
             if st.session_state.current_doc and st.session_state.last_visit_start:
                 time_spent = round(time.time() - st.session_state.last_visit_start, 1)
                 prev = st.session_state.current_doc
@@ -504,13 +503,22 @@ elif st.session_state.mode == "explore":
             st.session_state.mode = "result"
             st.rerun()
 
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🏠 Home", use_container_width=True):
+            for key in ["mode", "user_id", "current_doc", "nav_log",
+                        "doc_visit_times", "doc_visit_count",
+                        "last_visit_start", "session_start"]:
+                if key in st.session_state:
+                    del st.session_state[key]
+            st.rerun()
+
     with col_right:
         if st.session_state.current_doc is None:
             st.markdown("""
             <div style="background:#FFFFFF; border-radius:14px; padding:3rem 2rem;
                         border:1px solid #e5e7eb; text-align:center; color:#9ca3af;">
               <div style="font-size:2rem; margin-bottom:1rem;">📄</div>
-              <div style="font-size:0.9rem;">왼쪽 목록에서 문서를 선택하면 내용이 여기에 표시됩니다.</div>
+              <div style="font-size:0.9rem;">Select a document from the list on the left to view its contents.</div>
             </div>
             """, unsafe_allow_html=True)
         else:
@@ -750,7 +758,16 @@ elif st.session_state.mode == "result":
             for key in ["mode", "user_id", "current_doc", "nav_log",
                         "doc_visit_times", "doc_visit_count",
                         "last_visit_start", "session_start"]:
-                del st.session_state[key]
+                if key in st.session_state:
+                    del st.session_state[key]
+            st.rerun()
+
+        if st.button("🏠 Home", use_container_width=False):
+            for key in ["mode", "user_id", "current_doc", "nav_log",
+                        "doc_visit_times", "doc_visit_count",
+                        "last_visit_start", "session_start"]:
+                if key in st.session_state:
+                    del st.session_state[key]
             st.rerun()
 
     st.caption("Cognitive Navigation Explorer · HCI Research Prototype · Sora Kim")
