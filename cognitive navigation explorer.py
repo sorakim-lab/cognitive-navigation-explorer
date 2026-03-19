@@ -464,7 +464,7 @@ elif st.session_state.mode == "explore":
     </div>
     """, unsafe_allow_html=True)
 
-    col_left, col_right = st.columns([1.2, 2])
+    col_left, col_right = st.columns([1, 2])
 
     with col_left:
         st.markdown("<div class='section-header'>📂 Document List — click to open</div>", unsafe_allow_html=True)
@@ -472,29 +472,39 @@ elif st.session_state.mode == "explore":
         for doc_key, doc in DOCS.items():
             visit_count = st.session_state.doc_visit_count.get(doc_key, 0)
             is_active = st.session_state.current_doc == doc_key
+            tag_label = {"sop": "SOP", "protocol": "Protocol", "ref": "Reference"}[doc["tag"]]
 
-            tag_class = doc["tag"]
-            tag_label = {"sop": "SOP", "protocol": "Protocol", "ref": "Reference"}[tag_class]
-            active_style = "border-color: #3D7EFF; background: #eff6ff;" if is_active else ""
-
-            badge_html = ""
+            # badge text
             if visit_count > 1:
-                badge_html = f'<div style="margin-top:6px;"><span class="visit-badge loopback">↩ {visit_count}x visited</span></div>'
+                badge = f"↩ {visit_count}x"
             elif visit_count == 1:
-                badge_html = '<div style="margin-top:6px;"><span class="visit-badge">✓ visited</span></div>'
+                badge = "✓"
+            else:
+                badge = ""
 
-            st.markdown(f"""
-            <div class="doc-card" style="{active_style}">
-              <div class="doc-title">{doc['title']}</div>
-              <span class="doc-tag {tag_class}">{tag_label}</span>
-              <span class="doc-tag">{doc['code']}</span>
-              {badge_html}
-            </div>
-            """, unsafe_allow_html=True)
+            border_color = "#3D7EFF" if is_active else "#e5e7eb"
+            bg_color = "#eff6ff" if is_active else "#FFFFFF"
 
-            if st.button(f"Open", key=f"btn_{doc_key}", use_container_width=True):
-                navigate_to(doc_key)
-                st.rerun()
+            with st.container():
+                st.markdown(f"""
+                <div style="background:{bg_color}; border:1px solid {border_color};
+                            border-radius:12px; padding:12px 14px; margin-bottom:4px;
+                            box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                  <div style="font-size:0.84rem; font-weight:600; color:#111827;
+                              line-height:1.4; margin-bottom:6px; white-space:normal;
+                              word-break:break-word;">{doc['title']}</div>
+                  <span style="display:inline-block; background:#eff6ff; border-radius:20px;
+                               padding:2px 8px; font-size:0.68rem; font-weight:500;
+                               color:#2563eb; margin-right:4px; font-family:monospace;">{tag_label}</span>
+                  <span style="display:inline-block; background:#f3f4f6; border-radius:20px;
+                               padding:2px 8px; font-size:0.68rem; color:#6b7280;
+                               font-family:monospace;">{doc['code']}</span>
+                  {"" if not badge else f'<span style="display:inline-block; margin-left:6px; background:#{"fef2f2" if visit_count > 1 else "eff6ff"}; border-radius:20px; padding:2px 8px; font-size:0.68rem; font-weight:600; color:#{"dc2626" if visit_count > 1 else "2563eb"}; font-family:monospace;">{badge}</span>'}
+                </div>
+                """, unsafe_allow_html=True)
+                if st.button("Open", key=f"btn_{doc_key}", use_container_width=True):
+                    navigate_to(doc_key)
+                    st.rerun()
 
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("✅ Done — View Results", use_container_width=True, type="primary"):
