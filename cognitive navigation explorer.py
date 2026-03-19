@@ -472,39 +472,28 @@ elif st.session_state.mode == "explore":
         for doc_key, doc in DOCS.items():
             visit_count = st.session_state.doc_visit_count.get(doc_key, 0)
             is_active = st.session_state.current_doc == doc_key
-            tag_label = {"sop": "SOP", "protocol": "Protocol", "ref": "Reference"}[doc["tag"]]
+            tag_class = doc["tag"]
+            tag_label = {"sop": "SOP", "protocol": "Protocol", "ref": "Reference"}[tag_class]
+            active_style = "border-color: #3D7EFF; background: #eff6ff;" if is_active else ""
 
-            # badge text
+            badge_html = ""
             if visit_count > 1:
-                badge = f"↩ {visit_count}x"
+                badge_html = f'<div style="margin-top:6px;"><span class="visit-badge loopback">↩ {visit_count}x visited</span></div>'
             elif visit_count == 1:
-                badge = "✓"
-            else:
-                badge = ""
+                badge_html = '<div style="margin-top:6px;"><span class="visit-badge">✓ visited</span></div>'
 
-            border_color = "#3D7EFF" if is_active else "#e5e7eb"
-            bg_color = "#eff6ff" if is_active else "#FFFFFF"
+            st.markdown(f"""
+            <div class="doc-card" style="{active_style}">
+              <div class="doc-title">{doc['title']}</div>
+              <span class="doc-tag {tag_class}">{tag_label}</span>
+              <span class="doc-tag">{doc['code']}</span>
+              {badge_html}
+            </div>
+            """, unsafe_allow_html=True)
 
-            with st.container():
-                st.markdown(f"""
-                <div style="background:{bg_color}; border:1px solid {border_color};
-                            border-radius:12px; padding:12px 14px; margin-bottom:4px;
-                            box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-                  <div style="font-size:0.84rem; font-weight:600; color:#111827;
-                              line-height:1.4; margin-bottom:6px; white-space:normal;
-                              word-break:break-word;">{doc['title']}</div>
-                  <span style="display:inline-block; background:#eff6ff; border-radius:20px;
-                               padding:2px 8px; font-size:0.68rem; font-weight:500;
-                               color:#2563eb; margin-right:4px; font-family:monospace;">{tag_label}</span>
-                  <span style="display:inline-block; background:#f3f4f6; border-radius:20px;
-                               padding:2px 8px; font-size:0.68rem; color:#6b7280;
-                               font-family:monospace;">{doc['code']}</span>
-                  {"" if not badge else f'<span style="display:inline-block; margin-left:6px; background:#{"fef2f2" if visit_count > 1 else "eff6ff"}; border-radius:20px; padding:2px 8px; font-size:0.68rem; font-weight:600; color:#{"dc2626" if visit_count > 1 else "2563eb"}; font-family:monospace;">{badge}</span>'}
-                </div>
-                """, unsafe_allow_html=True)
-                if st.button("Open", key=f"btn_{doc_key}", use_container_width=True):
-                    navigate_to(doc_key)
-                    st.rerun()
+            if st.button("Open", key=f"btn_{doc_key}", use_container_width=True):
+                navigate_to(doc_key)
+                st.rerun()
 
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("✅ Done — View Results", use_container_width=True, type="primary"):
@@ -539,39 +528,62 @@ elif st.session_state.mode == "explore":
             doc = DOCS[st.session_state.current_doc]
             visit_count = st.session_state.doc_visit_count.get(st.session_state.current_doc, 0)
 
-            visit_info = ""
             if visit_count > 1:
-                visit_info = f'<span style="color:#dc2626; font-size:0.75rem; font-family:monospace;">↩ Visit #{visit_count} (loopback)</span>'
+                visit_color = '#dc2626'
+                visit_text = f'↩ Visit #{visit_count} (loopback)'
             elif visit_count == 1:
-                visit_info = f'<span style="color:#16a34a; font-size:0.75rem; font-family:monospace;">✓ First visit</span>'
+                visit_color = '#16a34a'
+                visit_text = '✓ First visit'
+            else:
+                visit_color = '#9ca3af'
+                visit_text = ''
 
+            # 헤더
             st.markdown(f"""
-            <div class="doc-content">
-              <div class="doc-content-title">{doc['title']}</div>
-              <div class="doc-content-meta">{doc['code']} · {doc['version']} · {visit_info}</div>
+            <div style="background:#FFFFFF; border-radius:14px 14px 0 0; padding:1.5rem 2rem 1rem 2rem;
+                        border:1px solid #e5e7eb; border-bottom:1px solid #f3f4f6;">
+              <div style="font-size:1.1rem; font-weight:700; color:#111827; margin-bottom:0.3rem;">{doc['title']}</div>
+              <div style="font-size:0.75rem; color:#9ca3af; font-family:monospace;">
+                {doc['code']} · {doc['version']} · <span style="color:{visit_color};">{visit_text}</span>
+              </div>
+            </div>
             """, unsafe_allow_html=True)
 
-            for section_title, section_body in doc["sections"].items():
+            # 섹션들
+            sections = list(doc["sections"].items())
+            for i, (section_title, section_body) in enumerate(sections):
+                is_last = (i == len(sections) - 1) and not doc["cross_refs"]
+                radius = "0 0 14px 14px" if is_last else "0"
                 st.markdown(f"""
-                <div class="doc-section">
-                  <div class="doc-section-title">{section_title}</div>
-                  <div class="doc-section-body">{section_body}</div>
+                <div style="background:#FFFFFF; padding:0.8rem 2rem;
+                            border-left:1px solid #e5e7eb; border-right:1px solid #e5e7eb;
+                            border-bottom:1px solid #f3f4f6; border-radius:{radius};">
+                  <div style="font-size:0.72rem; font-weight:700; letter-spacing:0.08em;
+                              text-transform:uppercase; color:#6b7280; margin-bottom:0.3rem;">{section_title}</div>
+                  <div style="font-size:0.88rem; color:#374151; line-height:1.7;">{section_body}</div>
                 </div>
                 """, unsafe_allow_html=True)
 
+            # cross-refs
             if doc["cross_refs"]:
-                st.markdown("<div class='doc-section-title' style='margin-top:1rem;'>🔗 Cross-references</div>", unsafe_allow_html=True)
+                st.markdown("""
+                <div style="background:#FFFFFF; border-radius:0 0 14px 14px; padding:0.8rem 2rem 1rem 2rem;
+                            border:1px solid #e5e7eb; border-top:none;">
+                  <div style="font-size:0.72rem; font-weight:700; letter-spacing:0.08em;
+                              text-transform:uppercase; color:#6b7280; margin-bottom:0.5rem;">🔗 Cross-references</div>
+                </div>
+                """, unsafe_allow_html=True)
                 for ref_key, ref_label in doc["cross_refs"]:
                     st.markdown(f"""
-                    <div class="cross-ref">
-                      <span class="cross-ref-icon">↗</span>{ref_label}
+                    <div style="background:#fff7ed; border:1px solid #fed7aa; border-radius:8px;
+                                padding:0.5rem 1rem; font-size:0.82rem; color:#92400e; margin-bottom:6px;">
+                      ↗ {ref_label}
                     </div>
                     """, unsafe_allow_html=True)
-                    if st.button(f"→ {DOCS[ref_key]['title']}", key=f"xref_{st.session_state.current_doc}_{ref_key}"):
+                    if st.button(f"→ {DOCS[ref_key]['title']}",
+                                 key=f"xref_{st.session_state.current_doc}_{ref_key}"):
                         navigate_to(ref_key)
                         st.rerun()
-
-            st.markdown("</div>", unsafe_allow_html=True)
 
 # ── RESULT MODE ────────────────────────────────────────────────────────────
 elif st.session_state.mode == "result":
